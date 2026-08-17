@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+{% block title %}Group Bill Splitter | NovaSpend{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold text-white mb-1"><i class="bi bi-calculator text-emerald me-2"></i> Group Expense & Bill Splitter</h2>
+        <p class="text-secondary mb-0">Calculate team dinners, lodging, or group trip expenses and log your share in 1-click.</p>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="card p-4" style="background: rgba(17, 24, 39, 0.85); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 20px;">
+            <h4 class="fw-bold text-white mb-3"><i class="bi bi-gear-fill text-success me-2"></i> Calculator & Input</h4>
+            
+            <form id="splitterForm" action="{% url 'bill_splitter' %}" method="POST">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label text-secondary">Event / Expense Title</label>
+                    <input type="text" id="splitTitle" name="title" required class="form-control" value="Team Dinner at Bistro" placeholder="e.g. Vacation Lodging">
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label text-secondary">Total Bill Amount (₹)</label>
+                        <input type="number" step="0.01" id="totalBill" required class="form-control" value="2400.00" oninput="calculateSplit()">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-secondary">Number of People</label>
+                        <input type="number" min="1" id="peopleCount" required class="form-control" value="4" oninput="calculateSplit()">
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label text-secondary">Tip / Tax Percentage (%)</label>
+                        <input type="number" step="1" id="tipPercentage" class="form-control" value="10" oninput="calculateSplit()">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-secondary">Category</label>
+                        <select name="category_id" class="form-select">
+                            {% for cat in categories %}
+                            <option value="{{ cat.id }}">{{ cat.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <input type="hidden" id="myShareInput" name="my_share" value="660.00">
+                <input type="hidden" id="splitNotesInput" name="notes" value="4-way split of ₹2,400.00 bill + 10% tip">
+
+                <div class="p-3 my-3 rounded-3" style="background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.3);">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-secondary small">Your Equal Share (Incl. Tip)</span>
+                        <h3 id="shareDisplay" class="fw-bold text-success mb-0">₹660.00</h3>
+                    </div>
+                    <p id="breakdownText" class="small text-secondary mb-0 mt-1">Total: ₹2,400.00 + ₹240.00 tip = ₹2,640.00 total (₹660.00 / person)</p>
+                </div>
+
+                <button type="submit" class="btn btn-success w-100 py-2 fs-6">
+                    <i class="bi bi-plus-circle me-1"></i> Log My Share to Expenses
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Summary Box -->
+    <div class="col-lg-6">
+        <div class="card p-4" style="background: rgba(17, 24, 39, 0.85); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 20px;">
+            <h4 class="fw-bold text-white mb-3"><i class="bi bi-people-fill text-primary me-2"></i> Itemized Split Overview</h4>
+            <div id="splitList" class="d-flex flex-column gap-2">
+                <!-- Populated via JS -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function calculateSplit() {
+    const total = parseFloat(document.getElementById('totalBill').value || 0);
+    const people = parseInt(document.getElementById('peopleCount').value || 1);
+    const tipPct = parseFloat(document.getElementById('tipPercentage').value || 0);
+
+    const tipAmount = total * (tipPct / 100);
+    const grandTotal = total + tipAmount;
+    const share = people > 0 ? (grandTotal / people) : 0;
+
+    document.getElementById('shareDisplay').innerText = `₹${share.toFixed(2)}`;
+    document.getElementById('myShareInput').value = share.toFixed(2);
+    document.getElementById('breakdownText').innerText = `Total: ₹${total.toFixed(2)} + ₹${tipAmount.toFixed(2)} tip = ₹${grandTotal.toFixed(2)} total (₹${share.toFixed(2)} / person)`;
+    document.getElementById('splitNotesInput').value = `${people}-way split of ₹${total.toFixed(2)} bill + ${tipPct}% tip`;
+
+    renderItemizedList(people, share);
+}
+
+function renderItemizedList(people, share) {
+    const container = document.getElementById('splitList');
+    container.innerHTML = '';
+    for (let i = 1; i <= people; i++) {
+        const item = document.createElement('div');
+        item.className = 'd-flex justify-content-between align-items-center p-3 rounded-3';
+        item.style.background = i === 1 ? 'rgba(16, 185, 129, 0.15)' : 'rgba(255, 255, 255, 0.03)';
+        item.style.border = i === 1 ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(255, 255, 255, 0.05)';
+        item.innerHTML = `
+            <span class="fw-semibold text-white">${i === 1 ? '👤 You (Logged Share)' : '👥 Member ' + i}</span>
+            <strong class="${i === 1 ? 'text-success' : 'text-light'}">₹${share.toFixed(2)}</strong>
+        `;
+        container.appendChild(item);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', calculateSplit);
+</script>
+{% endblock %}

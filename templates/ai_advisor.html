@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+{% block title %}AI Advisor | NovaSpend{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold text-white mb-1">🤖 NovaAI Financial Advisor</h2>
+        <p class="text-secondary mb-0">Real-time intelligent analysis of your monthly spending and budget risks.</p>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Main AI Chat Assistant Section -->
+    <div class="col-lg-8">
+        <div class="card h-100" style="background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 22px; overflow: hidden; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);">
+            <div class="card-header border-bottom border-secondary border-opacity-25 d-flex justify-content-between align-items-center py-3 px-4" style="background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.9));">
+                <span class="fw-bold text-white fs-5"><i class="bi bi-robot text-emerald me-2"></i> NovaAI Financial Assistant</span>
+                <span class="badge bg-success bg-opacity-25 text-emerald border border-success border-opacity-50 px-3 py-1 fs-6"><i class="bi bi-circle-fill me-1 small"></i> Live Analysis Active</span>
+            </div>
+            
+            <div class="card-body p-4 d-flex flex-column justify-content-between" style="min-height: 480px;">
+                <!-- Chat Messages Stream -->
+                <div id="chatStream" class="mb-4 pe-2" style="max-height: 380px; overflow-y: auto;">
+                    <div class="p-3 mb-3 rounded-4 border-start border-4 border-emerald" style="background: rgba(30, 41, 59, 0.9); border: 1px solid rgba(255, 255, 255, 0.1); color: #F8FAFC;">
+                        <p class="mb-0 fs-6">Hello <strong class="text-emerald">{{ user.username }}</strong>! I am your <strong>NovaAI Advisor</strong>. You have spent <strong class="text-danger">{{ request.user.profile.currency|default:"₹" }}{{ monthly_total|floatformat:2 }}</strong> out of your <strong class="text-emerald">{{ request.user.profile.currency|default:"₹" }}{{ budget_amount|floatformat:2 }}</strong> monthly budget. Ask me any question below!</p>
+                    </div>
+                </div>
+
+                <!-- Prompts & Input Box -->
+                <div>
+                    <div class="d-flex gap-2 flex-wrap mb-3">
+                        <button class="btn btn-outline-emerald btn-sm px-3 py-2 rounded-3" style="border-color: rgba(16, 185, 129, 0.4); color: #10B981;" onclick="sendPrompt('Analyze my budget & spending velocity')">📊 Budget Analysis</button>
+                        <button class="btn btn-outline-info btn-sm px-3 py-2 rounded-3" style="border-color: rgba(56, 189, 248, 0.4); color: #38BDF8;" onclick="sendPrompt('Can I afford a {{ request.user.profile.currency|default:"₹" }}2,000 purchase this month?')">💡 Affordability Check</button>
+                        <button class="btn btn-outline-warning btn-sm px-3 py-2 rounded-3" style="border-color: rgba(245, 158, 11, 0.4); color: #F59E0B;" onclick="sendPrompt('Give me a financial summary')">📋 Summary Report</button>
+                    </div>
+
+                    <div class="input-group input-group-lg shadow-sm">
+                        <input type="text" id="aiPromptInput" class="form-control text-white" placeholder="Ask AI about your budget, savings, or spending..." onkeypress="if(event.key==='Enter') submitUserPrompt()" style="background: rgba(15, 23, 42, 0.95); border: 1px solid rgba(255, 255, 255, 0.2); font-size: 0.95rem;">
+                        <button class="btn btn-emerald px-4 fw-bold" onclick="submitUserPrompt()" style="background: linear-gradient(135deg, #10B981, #059669); color: #FFF; border: none;"><i class="bi bi-send-fill me-1"></i> Ask AI</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Live Context Sidebar -->
+    <div class="col-lg-4">
+        <div class="card h-100" style="background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 22px; overflow: hidden; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);">
+            <div class="card-header border-bottom border-secondary border-opacity-25 py-3 px-4" style="background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.9));">
+                <span class="fw-bold text-white fs-5"><i class="bi bi-activity text-info me-2"></i> Live Budget Context</span>
+            </div>
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-center border-bottom border-secondary border-opacity-25 pb-3 mb-3">
+                    <span class="text-secondary fw-semibold">Monthly Budget:</span>
+                    <strong class="text-white fs-5">{{ request.user.profile.currency|default:"₹" }}{{ budget_amount|floatformat:2 }}</strong>
+                </div>
+                <div class="d-flex justify-content-between align-items-center border-bottom border-secondary border-opacity-25 pb-3 mb-3">
+                    <span class="text-secondary fw-semibold">Spent This Month:</span>
+                    <strong class="text-danger fs-5">{{ request.user.profile.currency|default:"₹" }}{{ monthly_total|floatformat:2 }}</strong>
+                </div>
+                <div class="d-flex justify-content-between align-items-center border-bottom border-secondary border-opacity-25 pb-3 mb-3">
+                    <span class="text-secondary fw-semibold">Remaining Budget:</span>
+                    <strong class="{% if remaining_budget >= 0 %}text-emerald{% else %}text-danger{% endif %} fs-5">
+                        {{ request.user.profile.currency|default:"₹" }}{{ remaining_budget|floatformat:2 }}
+                    </strong>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="text-secondary fw-semibold">Logged Expenses:</span>
+                    <span class="badge bg-secondary px-3 py-2 fs-6">{{ expense_count }} Records</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function sendPrompt(text) {
+    document.getElementById('aiPromptInput').value = text;
+    submitUserPrompt();
+}
+
+async function submitUserPrompt() {
+    const input = document.getElementById('aiPromptInput');
+    const text = input.value.trim();
+    if (!text) return;
+
+    const stream = document.getElementById('chatStream');
+    
+    // User Bubble
+    const userMsg = document.createElement('div');
+    userMsg.className = 'p-3 mb-3 text-white rounded-4 ms-auto text-end shadow-sm';
+    userMsg.style.maxWidth = '80%';
+    userMsg.style.background = 'linear-gradient(135deg, #10B981, #059669)';
+    userMsg.innerText = text;
+    stream.appendChild(userMsg);
+    input.value = '';
+    stream.scrollTop = stream.scrollHeight;
+
+    // Loading Bubble
+    const loading = document.createElement('div');
+    loading.className = 'p-3 mb-3 text-secondary rounded-4 border-start border-4 border-info';
+    loading.style.background = 'rgba(30, 41, 59, 0.9)';
+    loading.style.border = '1px solid rgba(255, 255, 255, 0.1)';
+    loading.innerHTML = '<i class="bi bi-hourglass-split me-2 text-info"></i> Analyzing financial data...';
+    stream.appendChild(loading);
+    stream.scrollTop = stream.scrollHeight;
+
+    try {
+        const res = await fetch('/api/ai-advisor/chat/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ prompt: text })
+        });
+        const data = await res.json();
+        stream.removeChild(loading);
+
+        const botMsg = document.createElement('div');
+        botMsg.className = 'p-3 mb-3 text-white rounded-4 border-start border-4 border-emerald shadow-sm';
+        botMsg.style.background = 'rgba(30, 41, 59, 0.95)';
+        botMsg.style.border = '1px solid rgba(255, 255, 255, 0.1)';
+        botMsg.style.lineHeight = '1.6';
+        botMsg.innerHTML = formatMarkdown(data.reply);
+        stream.appendChild(botMsg);
+        stream.scrollTop = stream.scrollHeight;
+    } catch(e) {
+        stream.removeChild(loading);
+    }
+}
+
+function formatMarkdown(text) {
+    return text.replace(/\*\*(.*?)\*\*/g, '<strong class="text-emerald">$1</strong>').replace(/\n/g, '<br>');
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}

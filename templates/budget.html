@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+{% load widget_tweaks %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold text-white mb-1"><i class="bi bi-piggy-bank-fill text-warning me-2"></i> Monthly Budget Command Center</h2>
+        <p class="text-secondary mb-0">Configure spending targets, track real-time utilization, and prevent overspending.</p>
+    </div>
+</div>
+
+<!-- Executive KPI Summary Cards -->
+<div class="row g-4 mb-4">
+    <!-- Monthly Budget Target -->
+    <div class="col-md-4">
+        <div class="card p-4 h-100" style="background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(20px); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 22px; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);">
+            <div class="d-flex align-items-center gap-3">
+                <div class="rounded-circle p-3 text-warning d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3);">
+                    <i class="bi bi-bullseye fs-2"></i>
+                </div>
+                <div>
+                    <span class="text-secondary text-uppercase small fw-bold">Monthly Budget Target</span>
+                    <h2 class="fw-bold text-white mb-0 mt-1">{% if budget %}{{ request.user.profile.currency|default:"₹" }}{{ budget.amount }}{% else %}<span class="fs-5 text-secondary">Not Configured</span>{% endif %}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Spent This Month -->
+    <div class="col-md-4">
+        <div class="card p-4 h-100" style="background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(20px); border: 1px solid rgba(244, 63, 94, 0.3); border-radius: 22px; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);">
+            <div class="d-flex align-items-center gap-3">
+                <div class="rounded-circle p-3 text-danger d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; background: rgba(244, 63, 94, 0.15); border: 1px solid rgba(244, 63, 94, 0.3);">
+                    <i class="bi bi-wallet2 fs-2"></i>
+                </div>
+                <div>
+                    <span class="text-secondary text-uppercase small fw-bold">Spent This Month</span>
+                    <h2 class="fw-bold text-white mb-0 mt-1">{{ request.user.profile.currency|default:"₹" }}{{ spent }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Remaining Balance -->
+    <div class="col-md-4">
+        <div class="card p-4 h-100" style="background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(20px); border: 1px solid {% if remaining >= 0 %}rgba(16, 185, 129, 0.3){% else %}rgba(244, 63, 94, 0.5){% endif %}; border-radius: 22px; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);">
+            <div class="d-flex align-items-center gap-3">
+                <div class="rounded-circle p-3 {% if remaining >= 0 %}text-emerald{% else %}text-danger{% endif %} d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; background: {% if remaining >= 0 %}rgba(16, 185, 129, 0.15){% else %}rgba(244, 63, 94, 0.15){% endif %}; border: 1px solid {% if remaining >= 0 %}rgba(16, 185, 129, 0.3){% else %}rgba(244, 63, 94, 0.3){% endif %};">
+                    <i class="bi bi-shield-check fs-2"></i>
+                </div>
+                <div>
+                    <span class="text-secondary text-uppercase small fw-bold">Remaining Funds</span>
+                    <h2 class="fw-bold {% if remaining >= 0 %}text-emerald{% else %}text-danger{% endif %} mb-0 mt-1">{{ request.user.profile.currency|default:"₹" }}{{ remaining }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Budget Utilization Progress Bar Card -->
+{% if budget %}
+<div class="card p-4 mb-4" style="background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 22px;">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <span class="fw-bold text-white fs-5"><i class="bi bi-speedometer text-info me-2"></i> Budget Utilization Meter</span>
+        <span class="fw-bold {% if spent_pct > 90 %}text-danger{% elif spent_pct > 75 %}text-warning{% else %}text-emerald{% endif %} fs-5">{{ spent_pct }}% Used</span>
+    </div>
+    <div class="progress mb-2" style="height: 16px; background: rgba(255, 255, 255, 0.1); border-radius: 10px;">
+        <div class="progress-bar progress-bar-striped progress-bar-animated {% if spent_pct > 90 %}bg-danger{% elif spent_pct > 75 %}bg-warning{% else %}bg-success{% endif %}" role="progressbar" style="width: {{ spent_pct }}%;" aria-valuenow="{{ spent_pct }}" aria-valuemin="0" aria-valuemax="100"></div>
+    </div>
+    <div class="d-flex justify-content-between text-secondary small">
+        <span>{{ request.user.profile.currency|default:"₹" }}0</span>
+        <span>Target: {{ request.user.profile.currency|default:"₹" }}{{ budget.amount }}</span>
+    </div>
+</div>
+{% endif %}
+
+<!-- Budget Configuration & Detailed Breakdown Grid -->
+<div class="row g-4">
+    <!-- Form: Configure / Edit Budget -->
+    <div class="col-lg-5">
+        <div class="card h-100" style="background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 22px; overflow: hidden; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);">
+            <div class="card-header border-bottom border-secondary border-opacity-25 py-3 px-4" style="background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.9));">
+                <span class="fw-bold text-white fs-5"><i class="bi bi-sliders text-emerald me-2"></i> Set Monthly Target</span>
+            </div>
+            <div class="card-body p-4">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    {% for field in form %}
+                    <div class="mb-4">
+                        <label class="form-label text-secondary small fw-bold text-uppercase mb-2">{{ field.label }}</label>
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text fw-bold fs-4" style="background-color: #1E293B !important; color: #10B981 !important; border: 1px solid rgba(255, 255, 255, 0.2) !important;">{{ request.user.profile.currency|default:"₹" }}</span>
+                            {{ field|add_class:"form-control bg-dark text-white border-secondary" }}
+                        </div>
+                        {% if field.help_text %}
+                        <div class="form-text text-secondary small">{{ field.help_text }}</div>
+                        {% endif %}
+                        {% for error in field.errors %}
+                        <div class="text-danger small mt-1">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    {% endfor %}
+
+                    <button type="submit" class="btn btn-emerald w-100 py-3 fw-bold fs-6 shadow-sm" style="background: linear-gradient(135deg, #10B981, #059669); color: #FFF; border: none; border-radius: 12px;">
+                        <i class="bi bi-check-circle-fill me-2"></i> Save Budget Target
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Ledger & Advisor Guidance -->
+    <div class="col-lg-7">
+        <div class="card h-100" style="background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 22px; overflow: hidden; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);">
+            <div class="card-header border-bottom border-secondary border-opacity-25 py-3 px-4" style="background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.9));">
+                <span class="fw-bold text-white fs-5"><i class="bi bi-journal-text text-info me-2"></i> Budget Status & Ledger Breakdown</span>
+            </div>
+            <div class="card-body p-4">
+                {% if budget %}
+                <div class="table-responsive mb-4">
+                    <table class="table table-dark table-hover align-middle rounded-3 overflow-hidden border border-secondary border-opacity-25" style="font-size: 0.95rem;">
+                        <tbody>
+                            <tr>
+                                <th class="text-secondary fw-semibold ps-3">Monthly Limit Target</th>
+                                <td class="fw-bold text-white text-end pe-3">{{ request.user.profile.currency|default:"₹" }}{{ budget.amount }}</td>
+                            </tr>
+                            <tr>
+                                <th class="text-secondary fw-semibold ps-3">Total Spent Till Date</th>
+                                <td class="fw-bold text-danger text-end pe-3">{{ request.user.profile.currency|default:"₹" }}{{ spent }}</td>
+                            </tr>
+                            <tr>
+                                <th class="text-secondary fw-semibold ps-3">Available Balance</th>
+                                <td class="fw-bold {% if remaining >= 0 %}text-emerald{% else %}text-danger{% endif %} text-end pe-3">{{ request.user.profile.currency|default:"₹" }}{{ remaining }}</td>
+                            </tr>
+                            <tr>
+                                <th class="text-secondary fw-semibold ps-3">Budget Utilization Status</th>
+                                <td class="text-end pe-3">
+                                    {% if remaining < 0 %}
+                                    <span class="badge bg-danger"><i class="bi bi-exclamation-triangle-fill me-1"></i> Over Budget</span>
+                                    {% elif spent_pct > 75 %}
+                                    <span class="badge bg-warning text-dark"><i class="bi bi-exclamation-circle-fill me-1"></i> Near Threshold</span>
+                                    {% else %}
+                                    <span class="badge bg-success"><i class="bi bi-check-circle-fill me-1"></i> Healthy Budget</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Advisor Guidance Box -->
+                <div class="p-3 rounded-4" style="background: rgba(30, 41, 59, 0.6); border: 1px solid rgba(255, 255, 255, 0.1);">
+                    <h6 class="fw-bold text-emerald mb-2"><i class="bi bi-lightbulb-fill me-1"></i> Budgeting Tip</h6>
+                    <p class="text-secondary small mb-0">Setting a strict monthly target helps you stick to financial goals. Monitor your daily velocity in the NovaAI Advisor tab for predictive alerts!</p>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-piggy-bank text-secondary display-1 mb-3"></i>
+                    <h4 class="fw-bold text-white mb-2">No Monthly Target Set</h4>
+                    <p class="text-secondary mb-4">Enter your monthly budget target on the left form to activate tracking.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

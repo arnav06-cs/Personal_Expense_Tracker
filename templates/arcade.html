@@ -1,0 +1,250 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold text-white mb-1"><i class="bi bi-trophy-fill text-warning me-2"></i> Savings Arcade & Achievements</h2>
+        <p class="text-secondary mb-0">Gamified streaks, unlocked badges, and active weekly financial challenges.</p>
+    </div>
+    <div class="badge bg-success bg-opacity-25 text-emerald border border-success border-opacity-50 px-3 py-2 fs-6">
+        <i class="bi bi-lightning-charge-fill me-1"></i> {{ streak_days }}-Day Saver Streak 🔥
+    </div>
+</div>
+
+<!-- Player Level & XP Progress Card (Clickable Level Roadmap) -->
+<div class="card p-4 mb-4" style="background: linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.9)); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 22px;">
+    <div class="row align-items-center">
+        <div class="col-md-3 text-center border-end border-secondary border-opacity-25 py-2 position-relative">
+            <div role="button" data-bs-toggle="modal" data-bs-target="#allLevelsModal" class="d-inline-flex align-items-center justify-content-center rounded-circle mb-2" style="width: 75px; height: 75px; background: linear-gradient(135deg, #10B981, #059669); color: #FFF; box-shadow: 0 0 25px rgba(16, 185, 129, 0.5); cursor: pointer; transition: transform 0.2s;" title="Click to view all levels roadmap!">
+                <span class="fw-bold fs-2">L{{ level }}</span>
+            </div>
+            <div>
+                <button type="button" class="btn btn-link p-0 text-white text-decoration-none fw-bold fs-5" data-bs-toggle="modal" data-bs-target="#allLevelsModal">
+                    Level {{ level }} Saver <i class="bi bi-info-circle-fill text-emerald ms-1" style="font-size: 0.85rem;"></i>
+                </button>
+            </div>
+            <span class="text-secondary small d-block mb-1">Click circle to view all levels &rarr;</span>
+        </div>
+        <div class="col-md-9 ps-md-4">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="fw-bold text-white"><i class="bi bi-star-fill text-warning me-1"></i> Experience Points (XP)</span>
+                <span class="text-emerald fw-bold">{{ xp }} / {{ xp_next_level }} XP</span>
+            </div>
+            <div class="progress mb-3" style="height: 14px; background: rgba(255, 255, 255, 0.1); border-radius: 10px;">
+                <div class="progress-bar bg-success progress-bar-striped progress-bar-animated" role="progressbar" style="width: {% widthratio xp xp_next_level 100 %}%; background: linear-gradient(90deg, #10B981, #3B82F6) !important;" aria-valuenow="{{ xp }}" aria-valuemin="0" aria-valuemax="{{ xp_next_level }}"></div>
+            </div>
+            <p class="text-secondary small mb-0"><i class="bi bi-info-circle me-1"></i> Log transactions, stay under budget, and add income to gain XP and unlock new levels!</p>
+        </div>
+    </div>
+</div>
+
+<!-- Unlocked Badges Grid -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="fw-bold text-white mb-0"><i class="bi bi-award-fill text-emerald me-2"></i> Achievements & Badges</h4>
+    <span class="text-secondary small">Showing <span class="text-emerald fw-bold" id="badgeCountLabel">6</span> of {{ badges|length }} Badges</span>
+</div>
+
+<div class="row g-4 mb-3" id="badgesContainer">
+    {% for badge in badges %}
+    <div class="col-md-4 badge-card-item {% if forloop.counter > 6 %}d-none extra-badge{% endif %}">
+        <div class="card p-4 h-100 text-center position-relative" style="background: {% if badge.unlocked %}rgba(16, 185, 129, 0.12){% else %}rgba(15, 23, 42, 0.5){% endif %}; border: 1px solid {% if badge.unlocked %}rgba(16, 185, 129, 0.4){% else %}rgba(255, 255, 255, 0.08){% endif %}; opacity: {% if badge.unlocked %}1{% else %}0.65{% endif %}; border-radius: 20px;">
+            <div class="fs-1 mb-2">{{ badge.icon }}</div>
+            <h5 class="fw-bold text-white mb-1">{{ badge.title }}</h5>
+            <p class="text-secondary small mb-3">{{ badge.desc }}</p>
+            {% if badge.unlocked %}
+            <span class="badge bg-success mx-auto"><i class="bi bi-check-circle-fill me-1"></i> Unlocked ({{ badge.reward }})</span>
+            {% else %}
+            <span class="badge bg-secondary mx-auto"><i class="bi bi-lock-fill me-1"></i> Locked</span>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% if badges|length > 6 %}
+<div class="text-center mb-5">
+    <button type="button" class="btn btn-outline-success px-4 py-2" id="toggleBadgesBtn" onclick="toggleMoreBadges()">
+        <i class="bi bi-chevron-down me-1"></i> Show More Badges ({{ badges|length|add:"-6" }} More)
+    </button>
+</div>
+{% endif %}
+
+<!-- Active Weekly Challenges -->
+<h4 class="fw-bold text-white mb-3"><i class="bi bi-flag-fill text-info me-2"></i> Active Weekly Challenges</h4>
+<div class="row g-4">
+    {% for ch in challenges %}
+    <div class="col-md-4">
+        <div class="card p-4 h-100" style="background: rgba(17, 24, 39, 0.85); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 18px;">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h5 class="fw-bold text-white mb-0">{{ ch.title }}</h5>
+                <span class="badge {% if ch.status == 'Completed' %}bg-success{% else %}bg-warning{% endif %}">{{ ch.status }}</span>
+            </div>
+            <p class="text-secondary small mb-3">{{ ch.desc }}</p>
+            <div class="progress mb-2" style="height: 8px; background: rgba(255, 255, 255, 0.1);">
+                <div class="progress-bar bg-info" style="width: {{ ch.progress }}%;"></div>
+            </div>
+            <span class="text-info small fw-semibold"><i class="bi bi-gift-fill me-1"></i> Reward: {{ ch.reward }}</span>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Modal: All Levels Roadmap -->
+<div class="modal fade" id="allLevelsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content" style="background: #0F172A; border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 24px; box-shadow: 0 25px 60px rgba(0,0,0,0.7);">
+            <div class="modal-header border-bottom border-secondary border-opacity-25 p-4">
+                <div>
+                    <h4 class="modal-title fw-bold text-white mb-1"><i class="bi bi-diagram-3-fill text-emerald me-2"></i> All Saver Ranks & Level Roadmap</h4>
+                    <p class="text-secondary small mb-0">See all 5 Saver Ranks, XP requirements, and unlocked privileges.</p>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="vstack gap-3">
+                    
+                    <!-- Level 1 -->
+                    <div class="p-3 rounded-4 d-flex align-items-center justify-content-between" style="background: {% if level >= 1 %}rgba(16, 185, 129, 0.15){% else %}rgba(255,255,255,0.03){% endif %}; border: 1px solid {% if level == 1 %}#10B981{% elif level > 1 %}rgba(16, 185, 129, 0.3){% else %}rgba(255,255,255,0.1){% endif %};">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold fs-4" style="width: 50px; height: 50px; background: {% if level >= 1 %}linear-gradient(135deg, #10B981, #059669){% else %}#334155{% endif %}; color: #FFF;">
+                                L1
+                            </div>
+                            <div>
+                                <h5 class="fw-bold text-white mb-0">Level 1: Financial Explorer</h5>
+                                <span class="text-secondary small">Requirement: 0 – 199 XP &bull; Log your first expenses</span>
+                            </div>
+                        </div>
+                        <div>
+                            {% if level == 1 %}
+                            <span class="badge bg-success px-3 py-2 fs-6"><i class="bi bi-stars me-1"></i> Current Rank</span>
+                            {% elif level > 1 %}
+                            <span class="badge bg-secondary px-3 py-2 fs-6"><i class="bi bi-check-circle-fill text-emerald me-1"></i> Unlocked</span>
+                            {% else %}
+                            <span class="badge bg-dark border border-secondary text-secondary px-3 py-2 fs-6"><i class="bi bi-lock-fill me-1"></i> Locked</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Level 2 -->
+                    <div class="p-3 rounded-4 d-flex align-items-center justify-content-between" style="background: {% if level >= 2 %}rgba(16, 185, 129, 0.15){% else %}rgba(255,255,255,0.03){% endif %}; border: 1px solid {% if level == 2 %}#10B981{% elif level > 2 %}rgba(16, 185, 129, 0.3){% else %}rgba(255,255,255,0.1){% endif %};">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold fs-4" style="width: 50px; height: 50px; background: {% if level >= 2 %}linear-gradient(135deg, #10B981, #059669){% else %}#334155{% endif %}; color: #FFF;">
+                                L2
+                            </div>
+                            <div>
+                                <h5 class="fw-bold text-white mb-0">Level 2: Budget Guardian</h5>
+                                <span class="text-secondary small">Requirement: 200 – 399 XP &bull; Set budget & complete 1 challenge</span>
+                            </div>
+                        </div>
+                        <div>
+                            {% if level == 2 %}
+                            <span class="badge bg-success px-3 py-2 fs-6"><i class="bi bi-stars me-1"></i> Current Rank</span>
+                            {% elif level > 2 %}
+                            <span class="badge bg-secondary px-3 py-2 fs-6"><i class="bi bi-check-circle-fill text-emerald me-1"></i> Unlocked</span>
+                            {% else %}
+                            <span class="badge bg-dark border border-secondary text-secondary px-3 py-2 fs-6"><i class="bi bi-lock-fill me-1"></i> Locked</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Level 3 -->
+                    <div class="p-3 rounded-4 d-flex align-items-center justify-content-between" style="background: {% if level >= 3 %}rgba(16, 185, 129, 0.15){% else %}rgba(255,255,255,0.03){% endif %}; border: 1px solid {% if level == 3 %}#10B981{% elif level > 3 %}rgba(16, 185, 129, 0.3){% else %}rgba(255,255,255,0.1){% endif %};">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold fs-4" style="width: 50px; height: 50px; background: {% if level >= 3 %}linear-gradient(135deg, #10B981, #059669){% else %}#334155{% endif %}; color: #FFF;">
+                                L3
+                            </div>
+                            <div>
+                                <h5 class="fw-bold text-white mb-0">Level 3: Savings Captain</h5>
+                                <span class="text-secondary small">Requirement: 400 – 599 XP &bull; Log 10+ entries & 3-day streak</span>
+                            </div>
+                        </div>
+                        <div>
+                            {% if level == 3 %}
+                            <span class="badge bg-success px-3 py-2 fs-6"><i class="bi bi-stars me-1"></i> Current Rank</span>
+                            {% elif level > 3 %}
+                            <span class="badge bg-secondary px-3 py-2 fs-6"><i class="bi bi-check-circle-fill text-emerald me-1"></i> Unlocked</span>
+                            {% else %}
+                            <span class="badge bg-dark border border-secondary text-secondary px-3 py-2 fs-6"><i class="bi bi-lock-fill me-1"></i> Locked</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Level 4 -->
+                    <div class="p-3 rounded-4 d-flex align-items-center justify-content-between" style="background: {% if level >= 4 %}rgba(16, 185, 129, 0.15){% else %}rgba(255,255,255,0.03){% endif %}; border: 1px solid {% if level == 4 %}#10B981{% elif level > 4 %}rgba(16, 185, 129, 0.3){% else %}rgba(255,255,255,0.1){% endif %};">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold fs-4" style="width: 50px; height: 50px; background: {% if level >= 4 %}linear-gradient(135deg, #10B981, #059669){% else %}#334155{% endif %}; color: #FFF;">
+                                L4
+                            </div>
+                            <div>
+                                <h5 class="fw-bold text-white mb-0">Level 4: Wealth Architect</h5>
+                                <span class="text-secondary small">Requirement: 600 – 799 XP &bull; Log income & stay 15% under budget</span>
+                            </div>
+                        </div>
+                        <div>
+                            {% if level == 4 %}
+                            <span class="badge bg-success px-3 py-2 fs-6"><i class="bi bi-stars me-1"></i> Current Rank</span>
+                            {% elif level > 4 %}
+                            <span class="badge bg-secondary px-3 py-2 fs-6"><i class="bi bi-check-circle-fill text-emerald me-1"></i> Unlocked</span>
+                            {% else %}
+                            <span class="badge bg-dark border border-secondary text-secondary px-3 py-2 fs-6"><i class="bi bi-lock-fill me-1"></i> Locked</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Level 5 -->
+                    <div class="p-3 rounded-4 d-flex align-items-center justify-content-between" style="background: {% if level >= 5 %}rgba(245, 158, 11, 0.15){% else %}rgba(255,255,255,0.03){% endif %}; border: 1px solid {% if level == 5 %}#F59E0B{% else %}rgba(255,255,255,0.1){% endif %};">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold fs-4" style="width: 50px; height: 50px; background: {% if level >= 5 %}linear-gradient(135deg, #F59E0B, #D97706){% else %}#334155{% endif %}; color: #FFF;">
+                                L5
+                            </div>
+                            <div>
+                                <h5 class="fw-bold text-white mb-0">Level 5: Financial Titan 👑 (MAX)</h5>
+                                <span class="text-secondary small">Requirement: 800+ XP &bull; 7-day streak & >30% savings rate</span>
+                            </div>
+                        </div>
+                        <div>
+                            {% if level == 5 %}
+                            <span class="badge bg-warning text-dark px-3 py-2 fs-6"><i class="bi bi-crown-fill me-1"></i> MAX RANK</span>
+                            {% else %}
+                            <span class="badge bg-dark border border-secondary text-secondary px-3 py-2 fs-6"><i class="bi bi-lock-fill me-1"></i> Locked</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            <div class="modal-footer border-top border-secondary border-opacity-25 p-3">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close Roadmap</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function toggleMoreBadges() {
+    const extraBadges = document.querySelectorAll('.extra-badge');
+    const btn = document.getElementById('toggleBadgesBtn');
+    const countLabel = document.getElementById('badgeCountLabel');
+    
+    let isExpanding = false;
+    extraBadges.forEach(el => {
+        if (el.classList.contains('d-none')) {
+            el.classList.remove('d-none');
+            isExpanding = true;
+        } else {
+            el.classList.add('d-none');
+        }
+    });
+
+    if (isExpanding) {
+        btn.innerHTML = '<i class="bi bi-chevron-up me-1"></i> Show Less Badges';
+        countLabel.textContent = '{{ badges|length }}';
+    } else {
+        btn.innerHTML = '<i class="bi bi-chevron-down me-1"></i> Show More Badges ({{ badges|length|add:"-6" }} More)';
+        countLabel.textContent = '6';
+    }
+}
+</script>
+{% endblock %}

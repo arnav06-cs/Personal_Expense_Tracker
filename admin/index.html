@@ -1,0 +1,78 @@
+{% extends "admin/index.html" %}
+{% load i18n %}
+
+{% block content %}
+
+<div class="row">
+
+    <div class="col-md-3">
+
+        <div class="card bg-primary text-white">
+
+            <div class="card-body">
+
+                <h2>{{ total_users }}</h2>
+
+                <h5>Total Users</h5>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="col-md-3">
+
+        <div class="card bg-success text-white">
+
+            <div class="card-body">
+
+                <h2>{{ total_expenses }}</h2>
+
+                <h5>Total Expenses</h5>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="col-md-3">
+
+        <div class="card bg-warning text-dark">
+
+            <div class="card-body">
+
+                <h2>{{ total_categories }}</h2>
+
+                <h5>Categories</h5>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="col-md-3">
+
+        <div class="card bg-danger text-white">
+
+            <div class="card-body">
+
+                <h2>₹{{ total_amount }}</h2>
+
+                <h5>Total Amount</h5>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<br>
+
+{{ block.super }}
+
+{% endblock %}

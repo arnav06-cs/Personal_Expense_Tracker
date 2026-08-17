@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center py-5">
+    <div class="col-md-5">
+        <div class="card text-center" style="background: rgba(17, 24, 39, 0.85); backdrop-filter: blur(20px); border: 1px solid rgba(244, 63, 94, 0.3); border-radius: 20px; box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);">
+            <div class="card-body p-4">
+                <div class="mb-3" style="font-size: 3rem; color: #F43F5E;">
+                    <i class="bi bi-exclamation-octagon-fill"></i>
+                </div>
+                
+                <h3 class="fw-bold mb-2 text-white">Delete Category?</h3>
+                <p class="text-secondary mb-4">
+                    Are you sure you want to delete category <strong class="text-white">"{{ category.name }}"</strong>? Expenses linked to this category may be affected.
+                </p>
+
+                <form method="post" class="d-flex justify-content-center gap-3">
+                    {% csrf_token %}
+                    <a href="{% url 'category_list' %}" class="btn btn-outline-secondary px-4 py-2">
+                        Cancel
+                    </a>
+                    <button type="submit" class="btn btn-danger px-4 py-2" style="background: linear-gradient(135deg, #F43F5E, #E11D48); border: none; box-shadow: 0 4px 15px rgba(244, 63, 94, 0.4);">
+                        <i class="bi bi-trash-fill me-1"></i> Yes, Delete Category
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

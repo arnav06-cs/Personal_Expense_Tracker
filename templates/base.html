@@ -1,0 +1,549 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Personal Expense Tracker | NovaSpend</title>
+    <!-- Bootstrap 5 & Google Fonts & Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            --bg-dark: #090D16;
+            --bg-card: rgba(17, 24, 39, 0.8);
+            --border-color: rgba(255, 255, 255, 0.12);
+            --text-primary: #F8FAFC;
+            --text-secondary: #94A3B8;
+            --emerald: #10B981;
+            --emerald-glow: rgba(16, 185, 129, 0.3);
+            --indigo: #6366F1;
+            --indigo-glow: rgba(99, 102, 241, 0.3);
+            --rose: #F43F5E;
+            --amber: #F59E0B;
+        }
+
+        body {
+            background-color: var(--bg-dark) !important;
+            color: var(--text-primary) !important;
+            font-family: 'Inter', sans-serif !important;
+            min-height: 100vh;
+            background-image: 
+                radial-gradient(circle at 10% 10%, rgba(99, 102, 241, 0.15) 0%, transparent 45%),
+                radial-gradient(circle at 90% 90%, rgba(16, 185, 129, 0.15) 0%, transparent 45%),
+                radial-gradient(circle at 50% 50%, rgba(139, 92, 246, 0.08) 0%, transparent 60%);
+            background-attachment: fixed;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1, h2, h3, h4, h5, h6, .sidebar-brand, .fw-bold {
+            font-family: 'Outfit', sans-serif !important;
+            letter-spacing: -0.5px;
+        }
+
+        /* Fix Select Option High-Contrast Text Color */
+        select option {
+            background-color: #0F172A !important;
+            color: #FFFFFF !important;
+            font-weight: 600 !important;
+        }
+
+        .text-emerald {
+            color: #10B981 !important;
+        }
+
+        .input-group-text {
+            background-color: #1E293B !important;
+            color: #10B981 !important;
+            border-color: rgba(255, 255, 255, 0.2) !important;
+            font-weight: 700 !important;
+        }
+
+        /* Layout & Vertical Sidebar */
+        .app-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar-left {
+            width: 260px;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(25px);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 1.5rem 1rem;
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 1000;
+            box-shadow: 10px 0 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .sidebar-brand {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: #FFF;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding-bottom: 1.25rem;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            text-decoration: none;
+        }
+
+        .sidebar-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+            padding: 0.75rem 1rem;
+            border-radius: 12px;
+            text-decoration: none;
+            transition: all 0.25s ease;
+        }
+
+        .sidebar-link i {
+            font-size: 1.25rem;
+        }
+
+        .sidebar-link:hover {
+            color: #FFF;
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateX(3px);
+        }
+
+        .sidebar-link.active {
+            color: #FFF;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.35), rgba(16, 185, 129, 0.35));
+            border: 1px solid rgba(99, 102, 241, 0.4);
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.2);
+        }
+
+        .sidebar-link.ai-link {
+            background: rgba(245, 158, 11, 0.12);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            color: var(--amber);
+        }
+        .sidebar-link.ai-link:hover {
+            background: rgba(245, 158, 11, 0.25);
+            color: #FFF;
+        }
+
+        .main-wrapper {
+            margin-left: 260px;
+            flex: 1;
+            min-height: 100vh;
+            width: calc(100% - 260px);
+        }
+
+        @media (max-width: 991px) {
+            .sidebar-left {
+                width: 100%;
+                position: relative;
+                height: auto;
+            }
+            .main-wrapper {
+                margin-left: 0;
+                width: 100%;
+            }
+            .app-layout {
+                flex-direction: column;
+            }
+        }
+
+        /* Cards & Glassmorphism */
+        .card, .dashboard-card {
+            background: var(--bg-card) !important;
+            backdrop-filter: blur(20px) !important;
+            border: 1px solid var(--border-color) !important;
+            border-radius: 18px !important;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4) !important;
+            color: var(--text-primary) !important;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            margin-bottom: 1.5rem;
+        }
+
+        .card:hover, .dashboard-card:hover {
+            transform: translateY(-4px) !important;
+            border-color: rgba(255, 255, 255, 0.25) !important;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), 0 0 20px rgba(99, 102, 241, 0.2) !important;
+        }
+
+        .card-header {
+            background: rgba(255, 255, 255, 0.04) !important;
+            border-bottom: 1px solid var(--border-color) !important;
+            color: var(--text-primary) !important;
+            font-weight: 700;
+            padding: 1.1rem 1.5rem;
+            border-top-left-radius: 18px !important;
+            border-top-right-radius: 18px !important;
+        }
+
+        .card-body { padding: 1.5rem; }
+
+        /* Tables */
+        .table {
+            color: var(--text-primary) !important;
+            vertical-align: middle;
+            border-color: var(--border-color) !important;
+        }
+
+        .table th {
+            background: rgba(30, 41, 59, 0.85) !important;
+            color: var(--text-secondary) !important;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.75px;
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color) !important;
+        }
+
+        .table td {
+            background: transparent !important;
+            padding: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+            color: var(--text-primary) !important;
+        }
+
+        .table tr:hover td { background: rgba(255, 255, 255, 0.03) !important; }
+
+        /* Badges */
+        .badge {
+            padding: 6px 12px !important;
+            border-radius: 30px !important;
+            font-weight: 600 !important;
+            font-size: 0.78rem !important;
+        }
+        .badge.bg-success { background: rgba(16, 185, 129, 0.2) !important; color: var(--emerald) !important; border: 1px solid rgba(16, 185, 129, 0.4); }
+        .badge.bg-danger { background: rgba(244, 63, 94, 0.2) !important; color: var(--rose) !important; border: 1px solid rgba(244, 63, 94, 0.4); }
+        .badge.bg-primary { background: rgba(99, 102, 241, 0.2) !important; color: var(--indigo) !important; border: 1px solid rgba(99, 102, 241, 0.4); }
+        .badge.bg-warning { background: rgba(245, 158, 11, 0.2) !important; color: var(--amber) !important; border: 1px solid rgba(245, 158, 11, 0.4); }
+
+        /* Buttons */
+        .btn {
+            border-radius: 10px !important;
+            font-weight: 600 !important;
+            padding: 0.6rem 1.25rem !important;
+            transition: all 0.25s ease !important;
+        }
+        .btn-primary { background: linear-gradient(135deg, var(--indigo), #4F46E5) !important; border: none !important; color: #FFF !important; box-shadow: 0 4px 15px var(--indigo-glow) !important; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 25px var(--indigo-glow) !important; }
+        .btn-success { background: linear-gradient(135deg, var(--emerald), #059669) !important; border: none !important; color: #FFF !important; box-shadow: 0 4px 15px var(--emerald-glow) !important; }
+        .btn-success:hover { transform: translateY(-2px); box-shadow: 0 8px 25px var(--emerald-glow) !important; }
+        .btn-danger { background: linear-gradient(135deg, var(--rose), #E11D48) !important; border: none !important; color: #FFF !important; }
+
+        /* Form Controls */
+        .form-control, .form-select {
+            background: rgba(15, 23, 42, 0.7) !important;
+            border: 1px solid var(--border-color) !important;
+            border-radius: 10px !important;
+            color: var(--text-primary) !important;
+            padding: 0.65rem 0.9rem !important;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: var(--indigo) !important;
+            box-shadow: 0 0 0 3px var(--indigo-glow) !important;
+            color: #FFF !important;
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-layout">
+    <!-- Left Sidebar Bar -->
+    <aside class="sidebar-left">
+        <!-- App Brand Header -->
+        <a href="{% url 'dashboard' %}" class="sidebar-brand">
+            <i class="bi bi-gem text-emerald fs-3"></i>
+            <span>NovaSpend</span>
+        </a>
+
+        <!-- Currency Selector -->
+        <form action="{% url 'change_currency' %}" method="POST" class="mb-3 px-1">
+            {% csrf_token %}
+            <div class="input-group input-group-sm mb-2">
+                <span class="input-group-text bg-transparent text-secondary border-secondary border-opacity-25"><i class="bi bi-globe text-emerald"></i></span>
+                <select name="currency" class="form-select form-select-sm shadow-sm" onchange="this.form.submit()" style="font-size: 0.82rem; background-color: #0F172A !important; color: #FFFFFF !important; border: 1px solid rgba(255,255,255,0.2) !important;">
+                    <option value="INR" style="background-color: #0F172A; color: #FFFFFF;" {% if request.session.currency == 'INR' or not request.session.currency %}selected{% endif %}>🇮🇳 INR (₹)</option>
+                    <option value="USD" style="background-color: #0F172A; color: #FFFFFF;" {% if request.session.currency == 'USD' %}selected{% endif %}>🇺🇸 USD ($)</option>
+                    <option value="EUR" style="background-color: #0F172A; color: #FFFFFF;" {% if request.session.currency == 'EUR' %}selected{% endif %}>🇪🇺 EUR (€)</option>
+                    <option value="GBP" style="background-color: #0F172A; color: #FFFFFF;" {% if request.session.currency == 'GBP' %}selected{% endif %}>🇬🇧 GBP (£)</option>
+                    <option value="AED" style="background-color: #0F172A; color: #FFFFFF;" {% if request.session.currency == 'AED' %}selected{% endif %}>🇦🇪 AED (AED)</option>
+                </select>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-info w-100 d-flex align-items-center justify-content-center gap-1" data-bs-toggle="modal" data-bs-target="#currencyConverterModal" style="font-size: 0.75rem; border-color: rgba(56, 189, 248, 0.4);">
+                <i class="bi bi-calculator-fill text-info"></i>
+                <span>Conversion Rate Panel</span>
+            </button>
+        </form>
+
+        <!-- Vertical Navigation Links -->
+        <nav class="sidebar-nav">
+            <a href="{% url 'dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                <i class="bi bi-speedometer2"></i>
+                <span>Dashboard</span>
+            </a>
+
+            <a href="{% url 'arcade' %}" class="sidebar-link {% if request.resolver_match.url_name == 'arcade' %}active{% endif %}" style="background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.3); color: var(--amber);">
+                <i class="bi bi-trophy-fill text-warning"></i>
+                <span class="fw-bold">Savings Arcade</span>
+                <span class="badge bg-warning ms-auto" style="font-size: 0.65rem;">NEW</span>
+            </a>
+
+            <a href="{% url 'ai_advisor' %}" class="sidebar-link ai-link {% if request.resolver_match.url_name == 'ai_advisor' %}active{% endif %}">
+                <i class="bi bi-robot"></i>
+                <span>NovaAI Advisor</span>
+                <span class="badge bg-warning ms-auto" style="font-size: 0.65rem;">AI</span>
+            </a>
+
+            <a href="{% url 'expense_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'expense_list' %}active{% endif %}">
+                <i class="bi bi-receipt"></i>
+                <span>Expenses</span>
+            </a>
+
+            <a href="{% url 'income_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'income_list' %}active{% endif %}">
+                <i class="bi bi-wallet2"></i>
+                <span>Income Logs</span>
+            </a>
+
+            <a href="{% url 'category_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'category_list' %}active{% endif %}">
+                <i class="bi bi-tags-fill"></i>
+                <span>Categories</span>
+            </a>
+
+            <a href="{% url 'bill_splitter' %}" class="sidebar-link {% if request.resolver_match.url_name == 'bill_splitter' %}active{% endif %}">
+                <i class="bi bi-calculator-fill"></i>
+                <span>Bill Splitter</span>
+            </a>
+
+            <a href="{% url 'budget' %}" class="sidebar-link {% if request.resolver_match.url_name == 'budget' %}active{% endif %}">
+                <i class="bi bi-piggy-bank-fill"></i>
+                <span>Budget</span>
+            </a>
+
+            <a href="{% url 'reports' %}" class="sidebar-link {% if request.resolver_match.url_name == 'reports' %}active{% endif %}">
+                <i class="bi bi-bar-chart-line-fill"></i>
+                <span>Reports</span>
+            </a>
+
+            <a href="{% url 'profile' %}" class="sidebar-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
+                <i class="bi bi-person-circle"></i>
+                <span>Profile</span>
+            </a>
+        </nav>
+
+        <!-- Sidebar Footer with User Profile & Logout -->
+        <div class="sidebar-footer mt-auto pt-3 border-top border-secondary border-opacity-25">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-2">
+                    {% if request.user.profile.profile_picture %}
+                    <img src="{{ request.user.profile.profile_picture.url }}" width="36" height="36" class="rounded-circle" style="object-fit:cover;">
+                    {% else %}
+                    <i class="bi bi-person-circle fs-4 text-emerald"></i>
+                    {% endif %}
+                    <div class="text-truncate" style="max-width: 120px;">
+                        <div class="fw-bold text-white small text-truncate">{{ request.user.username }}</div>
+                        <div class="text-secondary" style="font-size: 0.7rem;">Logged In</div>
+                    </div>
+                </div>
+                <form method="post" action="{% url 'logout' %}" class="m-0">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-outline-danger py-1 px-2" title="Logout">
+                        <i class="bi bi-box-arrow-right"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content Right Wrapper -->
+    <main class="main-wrapper">
+        <div class="container-fluid p-4">
+            {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+
+            {% block content %}
+            {% endblock %}
+        </div>
+    </main>
+</div>
+
+</div>
+
+<!-- Modal: Real-Time Currency Conversion Rate Panel -->
+<div class="modal fade" id="currencyConverterModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content" style="background: #0F172A; border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 24px; box-shadow: 0 25px 60px rgba(0,0,0,0.8);">
+            <div class="modal-header border-bottom border-secondary border-opacity-25 p-4">
+                <div>
+                    <h4 class="modal-title fw-bold text-white mb-1"><i class="bi bi-currency-exchange text-emerald me-2"></i> Real-Time Currency Converter & FX Rates</h4>
+                    <p class="text-secondary small mb-0">Convert values between major currencies using live FX exchange rates.</p>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                
+                <!-- Calculator Card -->
+                <div class="card p-4 mb-4" style="background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 18px;">
+                    <div class="row g-3 align-items-center">
+                        <div class="col-md-4">
+                            <label class="form-label text-secondary small fw-semibold">Amount to Convert</label>
+                            <input type="number" class="form-control form-control-lg bg-dark text-white border-secondary" id="convAmount" value="1000" oninput="calculateConversion()" style="font-weight: 700;">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label text-secondary small fw-semibold">From</label>
+                            <select class="form-select form-select-lg bg-dark text-white border-secondary" id="convFrom" onchange="calculateConversion()" style="font-weight: 600;">
+                                <option value="INR" selected>🇮🇳 INR (₹)</option>
+                                <option value="USD">🇺🇸 USD ($)</option>
+                                <option value="EUR">🇪🇺 EUR (€)</option>
+                                <option value="GBP">🇬🇧 GBP (£)</option>
+                                <option value="AED">🇦🇪 AED (AED)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-1 text-center pt-md-4">
+                            <button type="button" class="btn btn-outline-secondary rounded-circle" onclick="swapCurrencies()" title="Swap Currencies">
+                                <i class="bi bi-arrow-left-right text-emerald"></i>
+                            </button>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-secondary small fw-semibold">To</label>
+                            <select class="form-select form-select-lg bg-dark text-white border-secondary" id="convTo" onchange="calculateConversion()" style="font-weight: 600;">
+                                <option value="USD" selected>🇺🇸 USD ($)</option>
+                                <option value="INR">🇮🇳 INR (₹)</option>
+                                <option value="EUR">🇪🇺 EUR (€)</option>
+                                <option value="GBP">🇬🇧 GBP (£)</option>
+                                <option value="AED">🇦🇪 AED (AED)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Calculated Result Box -->
+                    <div class="mt-4 p-3 rounded-3 text-center" style="background: rgba(16, 185, 129, 0.15); border: 1px dashed rgba(16, 185, 129, 0.4);">
+                        <span class="text-secondary small text-uppercase fw-semibold">Converted Result</span>
+                        <h2 class="fw-bold text-emerald my-1" id="convResult">11.98 USD</h2>
+                        <span class="text-secondary small" id="convRateNote">Exchange Rate: 1 INR = 0.0120 USD</span>
+                    </div>
+                </div>
+
+                <!-- FX Exchange Rates Matrix -->
+                <h5 class="fw-bold text-white mb-3"><i class="bi bi-table text-info me-2"></i> Current FX Exchange Rates Matrix</h5>
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover align-middle rounded-3 overflow-hidden border border-secondary border-opacity-25" style="font-size: 0.9rem;">
+                        <thead style="background: #1E293B;">
+                            <tr>
+                                <th>Currency</th>
+                                <th>Code</th>
+                                <th>1 Foreign Unit in INR (₹)</th>
+                                <th>1 INR in Foreign Currency</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="fs-5 me-2">🇺🇸</span> US Dollar</td>
+                                <td><span class="badge bg-primary">USD</span></td>
+                                <td class="fw-bold text-white">₹83.50 INR</td>
+                                <td class="text-emerald">0.0120 USD</td>
+                            </tr>
+                            <tr>
+                                <td><span class="fs-5 me-2">🇪🇺</span> Euro</td>
+                                <td><span class="badge bg-info text-dark">EUR</span></td>
+                                <td class="fw-bold text-white">₹91.00 INR</td>
+                                <td class="text-emerald">0.0110 EUR</td>
+                            </tr>
+                            <tr>
+                                <td><span class="fs-5 me-2">🇬🇧</span> British Pound</td>
+                                <td><span class="badge bg-warning text-dark">GBP</span></td>
+                                <td class="fw-bold text-white">₹106.50 INR</td>
+                                <td class="text-emerald">0.0094 GBP</td>
+                            </tr>
+                            <tr>
+                                <td><span class="fs-5 me-2">🇦🇪</span> UAE Dirham</td>
+                                <td><span class="badge bg-secondary">AED</span></td>
+                                <td class="fw-bold text-white">₹22.70 INR</td>
+                                <td class="text-emerald">0.0441 AED</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+            <div class="modal-footer border-top border-secondary border-opacity-25 p-3">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close Panel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+const ratesInINR = {
+    "INR": 1.0,
+    "USD": 83.50,
+    "EUR": 91.00,
+    "GBP": 106.50,
+    "AED": 22.70
+};
+
+function calculateConversion() {
+    const amtEl = document.getElementById('convAmount');
+    const fromEl = document.getElementById('convFrom');
+    const toEl = document.getElementById('convTo');
+    const resultEl = document.getElementById('convResult');
+    const noteEl = document.getElementById('convRateNote');
+
+    if (!amtEl || !fromEl || !toEl) return;
+
+    const amount = parseFloat(amtEl.value) || 0;
+    const from = fromEl.value;
+    const to = toEl.value;
+
+    const amountInINR = amount * ratesInINR[from];
+    const converted = amountInINR / ratesInINR[to];
+    const rate = ratesInINR[from] / ratesInINR[to];
+
+    resultEl.innerText = converted.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' ' + to;
+    noteEl.innerText = `Exchange Rate: 1 ${from} = ${rate.toFixed(4)} ${to}`;
+}
+
+function swapCurrencies() {
+    const fromEl = document.getElementById('convFrom');
+    const toEl = document.getElementById('convTo');
+    const temp = fromEl.value;
+    fromEl.value = toEl.value;
+    toEl.value = temp;
+    calculateConversion();
+}
+
+document.addEventListener('DOMContentLoaded', calculateConversion);
+</script>
+
+{% block scripts %}
+{% endblock %}
+</body>
+</html>

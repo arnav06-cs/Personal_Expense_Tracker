@@ -1,0 +1,103 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | NovaSpend Admin{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+<style>
+    /* Executive High-Contrast Admin Overrides for Jazzmin & Standard Django Admin */
+    body, .content-wrapper, .wrapper {
+        font-family: 'Inter', sans-serif !important;
+    }
+
+    h1, h2, h3, h4, h5, .brand-text, .content-header h1 {
+        font-family: 'Outfit', sans-serif !important;
+    }
+
+    /* Force 100% High-Contrast Text Color across all Admin Tables & Cells */
+    .content-wrapper, .card, .card-body, .table-responsive, table, th, td, td *, span, p, label, .breadcrumb-item, .breadcrumb-item a {
+        color: #0F172A !important;
+    }
+
+    /* Table Headers */
+    .table th, table.table th, #result_list th, .table thead th {
+        background-color: #0F172A !important;
+        color: #FFFFFF !important;
+        font-weight: 700 !important;
+        padding: 0.85rem 1rem !important;
+    }
+
+    /* Table Rows & Cells */
+    .table td, table.table td, #result_list td, table.table tbody tr td {
+        background-color: #FFFFFF !important;
+        color: #0F172A !important;
+        font-weight: 600 !important;
+        font-size: 0.95rem !important;
+        padding: 0.85rem 1rem !important;
+        border-bottom: 1px solid #E2E8F0 !important;
+    }
+
+    /* Alternating Zebra Striping */
+    .table-striped tbody tr:nth-of-type(odd) td, #result_list tr:nth-child(even) td {
+        background-color: #F8FAFC !important;
+        color: #0F172A !important;
+    }
+
+    /* Hover State */
+    .table-hover tbody tr:hover td, #result_list tr:hover td {
+        background-color: #ECFDF5 !important;
+        color: #065F46 !important;
+    }
+
+    /* Form Inputs, Select Dropdowns & Search Bars */
+    input[type=text], input[type=password], input[type=email], input[type=number], input[type=search], select, .form-control, .form-select, #changelist-search input[type=text] {
+        background-color: #FFFFFF !important;
+        color: #0F172A !important;
+        border: 1px solid #94A3B8 !important;
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+        padding: 0.5rem 0.85rem !important;
+    }
+
+    /* Buttons */
+    .btn-primary, .button, input[type=submit], .submit-row input {
+        background: linear-gradient(135deg, #10B981, #059669) !important;
+        border: none !important;
+        color: #FFFFFF !important;
+        font-weight: 700 !important;
+        border-radius: 8px !important;
+        padding: 0.5rem 1.25rem !important;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3) !important;
+    }
+
+    .btn-danger, .deletelink {
+        background: linear-gradient(135deg, #F43F5E, #E11D48) !important;
+        border: none !important;
+        color: #FFFFFF !important;
+    }
+
+    /* Links */
+    a:link, a:visited, td a, th a {
+        color: #2563EB !important;
+        font-weight: 600 !important;
+    }
+
+    a:hover {
+        color: #1D4ED8 !important;
+        text-decoration: underline !important;
+    }
+</style>
+{% endblock %}
+
+{% block branding %}
+<h1 id="site-name">
+    <a href="{% url 'admin:index' %}">
+        <i class="bi bi-shield-lock-fill" style="color: #10B981;"></i> NovaSpend Admin Console
+    </a>
+</h1>
+{% endblock %}

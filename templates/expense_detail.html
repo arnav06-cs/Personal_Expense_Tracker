@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="card shadow">
+
+<div class="card-header bg-primary text-white">
+
+<h3>
+
+Expense Details
+
+</h3>
+
+</div>
+
+<div class="card-body">
+
+<table class="table">
+
+<tr>
+
+<th width="25%">
+
+Title
+
+</th>
+
+<td>
+
+{{ expense.title }}
+
+</td>
+
+</tr>
+
+<tr>
+
+<th>
+
+Category
+
+</th>
+
+<td>
+
+{{ expense.category }}
+
+</td>
+
+</tr>
+
+<tr>
+
+<th>
+
+Amount
+
+</th>
+
+<td>
+
+₹ {{ expense.amount }}
+
+</td>
+
+</tr>
+
+<tr>
+
+<th>
+
+Payment Method
+
+</th>
+
+<td>
+
+{{ expense.payment_method }}
+
+</td>
+
+</tr>
+
+<tr>
+
+<th>
+
+Expense Date
+
+</th>
+
+<td>
+
+{{ expense.expense_date }}
+
+</td>
+
+</tr>
+
+<tr>
+
+<th>
+
+Notes
+
+</th>
+
+<td>
+
+{{ expense.notes }}
+
+</td>
+
+</tr>
+
+<tr>
+
+<th>
+
+Receipt
+
+</th>
+
+<td>
+
+{% if expense.receipt %}
+
+<img
+src="{{ expense.receipt.url }}"
+class="img-fluid rounded"
+style="max-height:300px;">
+
+{% else %}
+
+No Receipt Uploaded
+
+{% endif %}
+
+</td>
+
+</tr>
+
+</table>
+
+<a
+href="{% url 'expense_edit' expense.id %}"
+class="btn btn-warning">
+
+Edit
+
+</a>
+
+<a
+href="{% url 'expense_list' %}"
+class="btn btn-secondary">
+
+Back
+
+</a>
+
+</div>
+
+</div>
+
+{% endblock %}
